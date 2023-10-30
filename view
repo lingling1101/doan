@@ -1,0 +1,62 @@
+USE QUANLYXEKHACH
+GO
+
+------VIEWS
+---xem ca làm việc của nhân viên trong ngày
+CREATE VIEW V_CaLamTrongNgay AS
+SELECT nv.TenNV, cv.TenCV, clv.MaCa, clv.NgayLam, clv.GioBatDau, clv.GioKetThuc
+FROM NHAN_VIEN nv
+    JOIN ThucHien th ON nv.MaNV = th.MaNV
+    JOIN CONG_VIEC cv ON cv.MaCV = th.MaCV
+    JOIN PhanCong pc ON nv.MaNV = pc.MaNV
+    JOIN CA_LAM_VIEC clv ON pc.MaCa = clv.MaCa AND pc.NgayLam = clv.NgayLam
+WHERE clv.NgayLam = CONVERT(DATE, GETDATE());
+
+
+---xem danh sách vé xe
+CREATE VIEW V_DanhSachVeXe AS
+SELECT MaVe, MaTuyenXe,  DonGia, TinhTrang, SoLuong, BienSoXe
+FROM dbo.VE_XE
+
+---xem số lượng vé đã bán trong ngày
+CREATE VIEW V_SoLuongVeDaBanTrongNgay AS
+SELECT vx.MaVe, SUM(cthd.SoLuong) AS SoLuongDaBanTaiQuay, sum(cthdUD.SoLuong) AS SoLuongDaBanQuaUD
+FROM dbo.VE_XE vx
+    JOIN dbo.ChiTietHD cthd ON vx.MaVe = cthd.MaVe
+    JOIN dbo.HOA_DON hd ON cthd.MaHD = hd.MaHD
+    JOIN dbo.ChiTietHD_UD cthdUD ON vx.MaVe = cthdUD.MaVe
+    JOIN dbo.HOA_DON_UD hdUD ON cthdUD.MaHDUD = hdud.MaHDUD
+WHERE hd.NgayLap = CONVERT(DATE, GETDATE()) AND hdud.NgayLap = CONVERT(DATE,GETDATE())
+GROUP BY vx.MaVe
+
+---xem thông tin nhân viên
+CREATE VIEW V_ThongTinNhanVien AS
+SELECT
+    NV.MaNV AS MaNV,
+    NV.HoNV AS HoNV,
+    NV.TenNV AS TenNV,
+    NV.NgaySinh AS NgaySinh,
+    NV.GioiTinh AS GioiTinh,
+    NV.DiaChi AS DiaChi,
+    NV.SDT AS SDT,
+    NV.SoCa AS SoCa,
+    NV.TroCap AS TroCap,
+    NV.NgayTuyenDung AS NgayTuyenDung,
+    CV.TenCV AS TenCV,
+    CV.Luong AS Luong
+FROM NHAN_VIEN NV
+LEFT JOIN ThucHien TH ON NV.MaNV = TH.MaNV
+LEFT JOIN CONG_VIEC CV ON TH.MaCV = CV.MaCV
+
+---xem chi phí phát sinh trong ngày
+CREATE VIEW V_ChiPhiPhatSinhTrongNgay AS
+SELECT ps.BienSoXe, ps.MaChiPhi, cp.LoaiPhi, cp.ChiPhi
+FROM PhatSinh ps
+JOIN XE x ON ps.BienSoXe = x.BienSoXe
+JOIN CHI_PHI_XE cp ON ps.MaChiPhi = cp.MaChiPhi
+WHERE ps.NgayPS = CONVERT(DATE, GETDATE());
+
+---xem tuyến xe
+CREATE VIEW V_TuyenXe AS
+SELECT *
+FROM dbo.TUYEN_XE
